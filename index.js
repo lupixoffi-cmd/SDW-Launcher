@@ -4,7 +4,7 @@ const fs = require('fs');
 const axios = require('axios');
 const AdmZip = require('adm-zip');
 const { googleSignIn, silentSignIn, signOutGoogle } = require('./src/google-auth');
-const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
+const { updateElectronApp, UpdateSourceType, makeUserNotifier } = require('update-electron-app');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -20,7 +20,14 @@ if (app.isPackaged) {
       type: UpdateSourceType.ElectronPublicUpdateService,
       repo: 'lupixoffi-cmd/SDW-Launcher'
     },
-    updateInterval: '5 minutes'
+    updateInterval: '5 minutes',
+    notifyUser: true,
+    onNotifyUser: makeUserNotifier({
+      title: 'Mise à jour disponible',
+      detail: 'Une nouvelle version de SDW Launcher a été téléchargée. Redémarre l\'application pour l\'appliquer.',
+      restartButtonText: 'Redémarrer',
+      laterButtonText: 'Plus tard'
+    })
   });
 }
 
@@ -30,10 +37,16 @@ function createWindow() {
     height: 800,
     icon: path.join(__dirname, 'icon.ico'),
     autoHideMenuBar: true,
+    show: false,
+    backgroundColor: '#0b0b10',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
+  });
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 
   mainWindow.loadFile('index.html');
