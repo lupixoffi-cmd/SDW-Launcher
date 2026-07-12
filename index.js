@@ -39,6 +39,7 @@ function createWindow() {
     backgroundColor: '#0b0b10',
     webPreferences: {
       nodeIntegration: true,
+      nodeIntegrationInSubFrames: true,
       contextIsolation: false
     }
   });
