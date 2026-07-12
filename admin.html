@@ -120,7 +120,10 @@
                 const isMe = me && u.uid === me.uid;
                 return `
                 <tr>
-                    <td>${u.displayName || '-'}${isMe ? ' <span class="muted">(toi)</span>' : ''}</td>
+                    <td>
+                        ${u.pseudo || u.displayName || '-'}${isMe ? ' <span class="muted">(toi)</span>' : ''}
+                        ${u.pseudo ? `<br><span class="muted">Nom Google : ${u.displayName || '-'}</span>` : ''}
+                    </td>
                     <td>${u.email}</td>
                     <td class="${u.emailVerified ? 'verified-yes' : 'verified-no'}">${u.emailVerified ? '✅' : '—'}</td>
                     <td>

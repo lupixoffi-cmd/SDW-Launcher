@@ -20,6 +20,19 @@
         }
         .profile-header h2 { font-size: 24px; }
         .profile-header .email { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+        .profile-header .real-name { color: var(--text-faint); font-size: 12px; margin-top: 2px; }
+        input[type="text"] {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--accent); }
+        .field-hint { font-size: 12px; color: var(--text-faint); margin-top: 6px; }
         textarea {
             width: 100%;
             min-height: 120px;
@@ -55,15 +68,20 @@
                 <img id="avatar" src="" alt="avatar">
                 <div>
                     <h2 id="displayName"></h2>
+                    <div class="real-name" id="realName"></div>
                     <div class="email" id="email"></div>
                     <span class="badge badge-online" id="roleBadge" style="margin-top:8px;"><span class="badge-dot"></span>member</span>
                 </div>
             </div>
 
-            <label class="field-label">Bio</label>
+            <label class="field-label">Pseudo</label>
+            <input type="text" id="pseudo" placeholder="Laisse vide pour utiliser ton nom Google">
+            <div class="field-hint">Si renseigné, ce pseudo remplace ton nom Google partout dans l'app.</div>
+
+            <label class="field-label" style="margin-top:24px;">Bio</label>
             <textarea id="bio" placeholder="Parle un peu de toi, ta config, tes voitures préférées..."></textarea>
 
-            <button class="btn btn-primary" style="margin-top:18px;" onclick="saveBio()">Enregistrer</button>
+            <button class="btn btn-primary" style="margin-top:18px;" onclick="saveProfile()">Enregistrer</button>
             <div id="saveStatus"></div>
         </div>
     </div>
@@ -72,19 +90,24 @@
         async function init() {
             const { user, profile } = window.parent.getSession();
             if (!user) return;
+            const pseudo = (profile && profile.pseudo) || '';
             document.getElementById('avatar').src = user.photoURL || 'nav-logo.png';
-            document.getElementById('displayName').textContent = user.displayName || user.email;
+            document.getElementById('displayName').textContent = pseudo || user.displayName || user.email;
+            document.getElementById('realName').textContent = pseudo ? `Nom Google : ${user.displayName || user.email}` : '';
             document.getElementById('email').textContent = user.email;
             document.getElementById('roleBadge').innerHTML = `<span class="badge-dot"></span>${profile ? profile.role : 'member'}`;
+            document.getElementById('pseudo').value = pseudo;
             document.getElementById('bio').value = (profile && profile.bio) || '';
         }
 
-        async function saveBio() {
+        async function saveProfile() {
             const status = document.getElementById('saveStatus');
             status.textContent = 'Enregistrement...';
             try {
+                await window.parent.updateMyPseudo(document.getElementById('pseudo').value.trim());
                 await window.parent.updateMyBio(document.getElementById('bio').value);
-                status.textContent = '✅ Bio mise à jour.';
+                status.textContent = '✅ Profil mis à jour.';
+                init();
             } catch (e) {
                 status.textContent = '❌ Erreur : ' + e.message;
             }

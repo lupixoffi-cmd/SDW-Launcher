@@ -138,7 +138,7 @@
             <a href="#" data-page="admin" class="role-gated" data-role="admin" onclick="loadPage('admin')"><span class="ico">🛠️</span>Administration</a>
         </div>
         <div class="sidebar-footer" id="sidebarFooter">
-            <div class="version-tag">SDW Launcher v1.0.2</div>
+            <div class="version-tag">SDW Launcher v1.0.3</div>
         </div>
     </div>
     <div class="content">
@@ -202,11 +202,11 @@
         function renderUserCard() {
             const footer = document.getElementById('sidebarFooter');
             if (!currentUser) {
-                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.2</div>';
+                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.3</div>';
                 return;
             }
             const photo = currentUser.photoURL || 'nav-logo.png';
-            const name = currentUser.displayName || currentUser.email;
+            const name = (currentProfile && currentProfile.pseudo) || currentUser.displayName || currentUser.email;
             const role = currentProfile ? currentProfile.role : 'member';
             footer.innerHTML = `
                 <div class="user-card">
@@ -217,7 +217,7 @@
                     </div>
                     <button class="logout-btn" onclick="window.logout()" title="Déconnexion">⏻</button>
                 </div>
-                <div class="version-tag">SDW Launcher v1.0.2</div>
+                <div class="version-tag">SDW Launcher v1.0.3</div>
             `;
         }
 
@@ -274,6 +274,7 @@
                         displayName: user.displayName,
                         photoURL: user.photoURL,
                         bio: '',
+                        pseudo: '',
                         role: 'member',
                         createdAt: serverTimestamp()
                     });
@@ -349,6 +350,13 @@
             currentProfile.bio = bio;
         };
 
+        window.updateMyPseudo = async function(pseudo) {
+            if (!currentUser) return;
+            await updateDoc(doc(db, 'users', currentUser.uid), { pseudo });
+            currentProfile.pseudo = pseudo;
+            renderUserCard();
+        };
+
         window.listAllUsers = async function() {
             const snap = await getDocs(collection(db, 'users'));
             const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
@@ -400,7 +408,7 @@
             await setDoc(doc(db, 'cars', carId, 'feedback', currentUser.uid), {
                 approved,
                 notes,
-                testerName: currentUser.displayName || currentUser.email,
+                testerName: (currentProfile && currentProfile.pseudo) || currentUser.displayName || currentUser.email,
                 updatedAt: serverTimestamp()
             });
         };
