@@ -4,7 +4,7 @@ const fs = require('fs');
 const axios = require('axios');
 const AdmZip = require('adm-zip');
 const { googleSignIn, silentSignIn, signOutGoogle } = require('./src/google-auth');
-const { updateElectronApp } = require('update-electron-app');
+const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -16,8 +16,11 @@ Menu.setApplicationMenu(null);
 
 if (app.isPackaged) {
   updateElectronApp({
-    repo: 'lupixoffi-cmd/SDW-Launcher',
-    updateInterval: '1 hour'
+    updateSource: {
+      type: UpdateSourceType.ElectronPublicUpdateService,
+      repo: 'lupixoffi-cmd/SDW-Launcher'
+    },
+    updateInterval: '5 minutes'
   });
 }
 
