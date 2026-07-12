@@ -75,12 +75,28 @@ function googleSignIn() {
 
         const expectedState = crypto.randomBytes(16).toString('hex');
         let port;
+        let handled = false;
 
         const server = http.createServer((req, res) => {
             const url = new URL(req.url, 'http://127.0.0.1');
             const code = url.searchParams.get('code');
             const error = url.searchParams.get('error');
             const state = url.searchParams.get('state');
+
+            // Le navigateur redemande souvent des ressources parasites (favicon.ico...)
+            // sur ce serveur juste apres la vraie redirection : on les ignore sans
+            // jamais les traiter comme une tentative de connexion invalide.
+            if (!code && !error) {
+                res.writeHead(204);
+                res.end();
+                return;
+            }
+            if (handled) {
+                res.writeHead(204);
+                res.end();
+                return;
+            }
+            handled = true;
 
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
 
