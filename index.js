@@ -1,10 +1,8 @@
 const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
 const path = require('path');
-const fs = require('fs');
-const axios = require('axios');
-const AdmZip = require('adm-zip');
 const { googleSignIn, silentSignIn, signOutGoogle } = require('./src/google-auth');
 const { updateElectronApp, UpdateSourceType, makeUserNotifier } = require('update-electron-app');
+const { installFromMega } = require('./src/content-installer');
 
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -52,37 +50,19 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 }
 
-// Gestion des téléchargements
-ipcMain.on('download-content', async (event, data) => {
-  const savePath = path.join(app.getPath('downloads'), `${data.type}.zip`);
-  const status = (msg) => mainWindow.webContents.send('download-status', msg);
-
-  status('⬇️ Téléchargement lancé...');
-
+ipcMain.handle('install-content', async (event, { url, contentType }) => {
   try {
-    const response = await axios({
-      method: 'get',
-      url: data.url,
-      responseType: 'stream',
-      timeout: 0 // Pas de timeout
-    });
-
-    const writer = fs.createWriteStream(savePath);
-    response.data.pipe(writer);
-
-    writer.on('finish', () => {
-      status('📦 Extraction...');
-      try {
-        const zip = new AdmZip(savePath);
-        const acPath = 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\assettocorsa\\content';
-        zip.extractAllTo(acPath, true);
-        status(`✅ ${data.type} installé avec succès !`);
-      } catch (e) {
-        status('❌ Erreur extraction. Vérifie que le dossier content existe.');
+    const destDir = await installFromMega({
+      url,
+      contentType,
+      mainWindow,
+      onProgress: (fraction) => {
+        event.sender.send('install-progress', { fraction });
       }
     });
-  } catch (error) {
-    status('❌ Erreur : ' + error.message);
+    return { success: true, path: destDir };
+  } catch (e) {
+    return { success: false, error: e.message };
   }
 });
 

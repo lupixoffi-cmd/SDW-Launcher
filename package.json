@@ -1,7 +1,7 @@
 {
   "name": "sdw-launcher",
   "productName": "SDW Launcher",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Launcher Officiel SDW - Assetto Corsa",
   "main": "index.js",
   "author": "SDW Team",
@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
-    "axios": "^1.7.2",
     "electron-squirrel-startup": "^1.0.0",
     "firebase": "^12.16.0",
+    "megajs": "^1.3.10",
     "update-electron-app": "^3.3.0"
   },
   "devDependencies": {

@@ -138,7 +138,7 @@
             <a href="#" data-page="admin" class="role-gated" data-role="admin" onclick="loadPage('admin')"><span class="ico">🛠️</span>Administration</a>
         </div>
         <div class="sidebar-footer" id="sidebarFooter">
-            <div class="version-tag">SDW Launcher v1.0.4</div>
+            <div class="version-tag">SDW Launcher v1.0.5</div>
         </div>
     </div>
     <div class="content">
@@ -202,7 +202,7 @@
         function renderUserCard() {
             const footer = document.getElementById('sidebarFooter');
             if (!currentUser) {
-                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.4</div>';
+                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.5</div>';
                 return;
             }
             const photo = currentUser.photoURL || 'nav-logo.png';
@@ -217,7 +217,7 @@
                     </div>
                     <button class="logout-btn" onclick="window.logout()" title="Déconnexion">⏻</button>
                 </div>
-                <div class="version-tag">SDW Launcher v1.0.4</div>
+                <div class="version-tag">SDW Launcher v1.0.5</div>
             `;
         }
 

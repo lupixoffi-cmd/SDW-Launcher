@@ -35,7 +35,7 @@
     <div class="page">
         <span class="eyebrow">Contenu</span>
         <h1 class="page-title">Téléchargements</h1>
-        <p class="page-subtitle">Choisis tes packs et installe-les dans Assetto Corsa</p>
+        <p class="page-subtitle">Choisis tes packs, ils s'installent directement dans Assetto Corsa</p>
 
         <div class="section-title">Voitures Sorties <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
         <div class="grid grid-3" id="releasedCars"></div>
@@ -45,17 +45,17 @@
             <div class="card pack-card">
                 <div class="pack-icon">🚗</div>
                 <h3>Traffic Car Pack</h3>
-                <button class="btn btn-secondary" onclick="openLink('traffic')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('traffic')">Installer</button>
             </div>
             <div class="card pack-card">
                 <div class="pack-icon">🛞</div>
                 <h3>WTF Car Pack</h3>
-                <button class="btn btn-secondary" onclick="openLink('wtf')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('wtf')">Installer</button>
             </div>
             <div class="card pack-card">
                 <div class="pack-icon">🏎️</div>
                 <h3>Grip Car Pack</h3>
-                <button class="btn btn-secondary" onclick="openLink('grip')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('grip')">Installer</button>
             </div>
         </div>
 
@@ -64,22 +64,22 @@
             <div class="card pack-card">
                 <div class="pack-icon">🗾</div>
                 <h3>Shutoko</h3>
-                <button class="btn btn-secondary" onclick="openLink('shutoko')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('shutoko')">Installer</button>
             </div>
             <div class="card pack-card">
                 <div class="pack-icon">🏯</div>
                 <h3>Tsukuba</h3>
-                <button class="btn btn-secondary" onclick="openLink('tsukuba')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('tsukuba')">Installer</button>
             </div>
             <div class="card pack-card">
                 <div class="pack-icon">🌉</div>
                 <h3>Brooklyn Park</h3>
-                <button class="btn btn-secondary" onclick="openLink('brooklyn')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('brooklyn')">Installer</button>
             </div>
             <div class="card pack-card">
                 <div class="pack-icon">⛰️</div>
                 <h3>Transfagarasan</h3>
-                <button class="btn btn-secondary" onclick="openLink('transfagarasan')">Télécharger</button>
+                <button class="btn btn-secondary" onclick="openLink('transfagarasan')">Installer</button>
             </div>
         </div>
 
@@ -87,6 +87,34 @@
     </div>
 
     <script>
+        const { ipcRenderer } = require('electron');
+
+        function esc(str) {
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
+        }
+
+        ipcRenderer.on('install-progress', (event, { fraction }) => {
+            setStatus(`⬇️ Téléchargement en cours... ${Math.round(fraction * 100)}%`);
+        });
+
+        async function installContent(url, contentType, label) {
+            setStatus(`⬇️ Préparation de ${label}...`);
+            try {
+                const result = await ipcRenderer.invoke('install-content', { url, contentType });
+                if (result.success) {
+                    setStatus(`✅ ${label} installé avec succès dans Assetto Corsa !`);
+                } else {
+                    setStatus(`❌ Erreur : ${result.error}`);
+                }
+            } catch (e) {
+                setStatus(`❌ Erreur : ${e.message}`);
+            }
+        }
+
         function renderReleasedCars(cars) {
             const released = cars.filter(c => c.status === 'released');
             const container = document.getElementById('releasedCars');
@@ -99,7 +127,7 @@
                     <div class="pack-icon">🏁</div>
                     <h3>${car.name}</h3>
                     ${car.description ? `<p style="color:var(--text-dim); font-size:13px; margin:0;">${car.description}</p>` : ''}
-                    ${car.megaLink ? `<button class="btn btn-secondary" onclick="window.open('${car.megaLink}', '_blank')">Télécharger</button>` : ''}
+                    ${car.megaLink ? `<button class="btn btn-secondary" onclick="installContent('${esc(car.megaLink)}', 'car', '${esc(car.name)}')">Installer</button>` : ''}
                 </div>
             `).join('');
         }
@@ -111,19 +139,18 @@
 
         function openLink(type) {
             let url = '';
+            let contentType = 'car';
 
             if (type === 'traffic') url = "https://mega.nz/folder/y8pD2BzC#iFkH7ZF3I4Ae6ksTD1jQ-g";
             else if (type === 'wtf') url = "https://mega.nz/folder/zhxxUQDA#gH42MW0m6QMjppRBICbUOA";
             else if (type === 'grip') url = "https://mega.nz/folder/Xk4DQRIZ#XRry3USvVB6Nor4_v6a9AQ";
-            else if (type === 'shutoko') url = "https://mega.nz/file/OwYhGLLI#pkp5nUZsHEvkT6YeGnP8XjPmQPpK8Gz-XU6kqWVOjGY";
-            else if (type === 'tsukuba') url = "https://mega.nz/file/LlJXXSRZ#WVqrRk-NGTKYLIjiOQ_I5_jg5kskjHU705El-j9AE6U";
-            else if (type === 'brooklyn') url = "https://mega.nz/file/mpICzCJR#IPgJnIWvG78_3SI4eQNXhpvcZD1nq8ktRiwmoayX-TE";
-            else if (type === 'transfagarasan') url = "https://mega.nz/file/HhIDXSZL#WNwXelWSll_btd2WDwpa2mA0IEfjfg_6NpA2aNaz2UE";
+            else if (type === 'shutoko') { url = "https://mega.nz/file/OwYhGLLI#pkp5nUZsHEvkT6YeGnP8XjPmQPpK8Gz-XU6kqWVOjGY"; contentType = 'track'; }
+            else if (type === 'tsukuba') { url = "https://mega.nz/file/LlJXXSRZ#WVqrRk-NGTKYLIjiOQ_I5_jg5kskjHU705El-j9AE6U"; contentType = 'track'; }
+            else if (type === 'brooklyn') { url = "https://mega.nz/file/mpICzCJR#IPgJnIWvG78_3SI4eQNXhpvcZD1nq8ktRiwmoayX-TE"; contentType = 'track'; }
+            else if (type === 'transfagarasan') { url = "https://mega.nz/file/HhIDXSZL#WNwXelWSll_btd2WDwpa2mA0IEfjfg_6NpA2aNaz2UE"; contentType = 'track'; }
 
             const name = type.charAt(0).toUpperCase() + type.slice(1) + " Pack";
-
-            window.open(url, '_blank');
-            document.getElementById('status').innerHTML = `✅ Lien pour ${name} ouvert — télécharge et extrait le fichier.`;
+            installContent(url, contentType, name);
         }
     </script>
 </body>
