@@ -4,10 +4,22 @@ const fs = require('fs');
 const axios = require('axios');
 const AdmZip = require('adm-zip');
 const { googleSignIn, silentSignIn, signOutGoogle } = require('./src/google-auth');
+const { updateElectronApp } = require('update-electron-app');
+
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
 
 let mainWindow;
 
 Menu.setApplicationMenu(null);
+
+if (app.isPackaged) {
+  updateElectronApp({
+    repo: 'lupixoffi-cmd/SDW-Launcher',
+    updateInterval: '1 hour'
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
