@@ -3,7 +3,11 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      // 7za.exe est un vrai exécutable : il doit être extrait de l'asar
+      // pour pouvoir être lancé (spawn), sinon Windows ne le trouve pas.
+      unpack: '**/node_modules/7zip-bin/**/*'
+    },
     icon: './icon.ico'   // ← Ton icône ici
   },
   rebuildConfig: {},

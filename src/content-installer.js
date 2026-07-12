@@ -9,6 +9,15 @@ const { app, dialog } = require('electron');
 
 const ARCHIVE_EXTENSIONS = ['.zip', '.rar', '.7z'];
 
+// 7zip-min tente de détecter automatiquement s'il tourne dans un app.asar
+// en inspectant process.argv, mais cette détection ne fonctionne pas avec
+// notre façon de lancer l'app. On force nous-mêmes le bon chemin vers le
+// binaire 7za extrait de l'asar (voir asar.unpack dans forge.config.js).
+if (app.isPackaged) {
+    const { path7za } = require('7zip-bin');
+    _7z.config({ binaryPath: path7za.replace('app.asar', 'app.asar.unpacked') });
+}
+
 function configFilePath() {
     return path.join(app.getPath('userData'), 'ac-path.json');
 }
