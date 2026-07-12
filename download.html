@@ -87,8 +87,6 @@
     </div>
 
     <script>
-        const { ipcRenderer } = require('electron');
-
         function esc(str) {
             return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         }
@@ -97,14 +95,12 @@
             document.getElementById('status').textContent = msg;
         }
 
-        ipcRenderer.on('install-progress', (event, { fraction }) => {
-            setStatus(`⬇️ Téléchargement en cours... ${Math.round(fraction * 100)}%`);
-        });
-
         async function installContent(url, contentType, label) {
             setStatus(`⬇️ Préparation de ${label}...`);
             try {
-                const result = await ipcRenderer.invoke('install-content', { url, contentType });
+                const result = await window.parent.installContent(url, contentType, (fraction) => {
+                    setStatus(`⬇️ Téléchargement en cours... ${Math.round(fraction * 100)}%`);
+                });
                 if (result.success) {
                     setStatus(`✅ ${label} installé avec succès dans Assetto Corsa !`);
                 } else {

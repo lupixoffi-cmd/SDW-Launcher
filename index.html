@@ -138,7 +138,7 @@
             <a href="#" data-page="admin" class="role-gated" data-role="admin" onclick="loadPage('admin')"><span class="ico">🛠️</span>Administration</a>
         </div>
         <div class="sidebar-footer" id="sidebarFooter">
-            <div class="version-tag">SDW Launcher v1.0.8</div>
+            <div class="version-tag">SDW Launcher v1.0.9</div>
         </div>
     </div>
     <div class="content">
@@ -202,7 +202,7 @@
         function renderUserCard() {
             const footer = document.getElementById('sidebarFooter');
             if (!currentUser) {
-                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.8</div>';
+                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.9</div>';
                 return;
             }
             const photo = currentUser.photoURL || 'nav-logo.png';
@@ -217,7 +217,7 @@
                     </div>
                     <button class="logout-btn" onclick="window.logout()" title="Déconnexion">⏻</button>
                 </div>
-                <div class="version-tag">SDW Launcher v1.0.8</div>
+                <div class="version-tag">SDW Launcher v1.0.9</div>
             `;
         }
 
@@ -416,6 +416,18 @@
         window.listCarFeedback = async function(carId) {
             const snap = await getDocs(collection(db, 'cars', carId, 'feedback'));
             return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        };
+
+        window.installContent = async function(url, contentType, onProgress) {
+            const listener = (event, data) => {
+                if (onProgress) onProgress(data.fraction);
+            };
+            ipcRenderer.on('install-progress', listener);
+            try {
+                return await ipcRenderer.invoke('install-content', { url, contentType });
+            } finally {
+                ipcRenderer.removeListener('install-progress', listener);
+            }
         };
 
         window.firestoreDb = db;
