@@ -2,8 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const AdmZip = require('adm-zip');
+const _7z = require('7zip-min');
+const { createExtractorFromFile } = require('node-unrar-js');
 const { File } = require('megajs');
 const { app, dialog } = require('electron');
+
+const ARCHIVE_EXTENSIONS = ['.zip', '.rar', '.7z'];
 
 function configFilePath() {
     return path.join(app.getPath('userData'), 'ac-path.json');
@@ -64,6 +68,36 @@ async function askUserForAcPath(mainWindow) {
     return chosen;
 }
 
+function isArchive(name) {
+    const ext = path.extname(name || '').toLowerCase();
+    return ARCHIVE_EXTENSIONS.includes(ext);
+}
+
+async function extractArchive(archivePath, destDir) {
+    fs.mkdirSync(destDir, { recursive: true });
+    const ext = path.extname(archivePath).toLowerCase();
+
+    if (ext === '.zip') {
+        const zip = new AdmZip(archivePath);
+        zip.extractAllTo(destDir, true);
+        return;
+    }
+    if (ext === '.7z') {
+        await new Promise((resolve, reject) => {
+            _7z.unpack(archivePath, destDir, (err) => err ? reject(err) : resolve());
+        });
+        return;
+    }
+    if (ext === '.rar') {
+        const extractor = await createExtractorFromFile({ filepath: archivePath, targetPath: destDir });
+        const extracted = extractor.extract({});
+        // Le générateur doit être parcouru pour que l'extraction s'exécute réellement.
+        [...extracted.files];
+        return;
+    }
+    throw new Error(`Format d'archive non pris en charge : ${ext}`);
+}
+
 function downloadMegaFileToPath(file, destPath, onProgress) {
     return new Promise((resolve, reject) => {
         fs.mkdirSync(path.dirname(destPath), { recursive: true });
@@ -87,13 +121,12 @@ async function downloadMegaFolderRecursive(folder, destDir, tmpDir, onProgress) 
     for (const child of children) {
         if (child.directory) {
             await downloadMegaFolderRecursive(child, path.join(destDir, child.name), tmpDir, onProgress);
-        } else if (child.name && child.name.toLowerCase().endsWith('.zip')) {
-            // Chaque voiture est distribuée sous forme d'un zip individuel :
-            // on le télécharge à part puis on l'extrait directement dans content/cars (ou tracks).
+        } else if (isArchive(child.name)) {
+            // Chaque élément est distribué sous forme d'une archive individuelle :
+            // on la télécharge à part puis on l'extrait directement dans content/cars (ou tracks).
             const tmpFilePath = path.join(tmpDir, child.name);
             await downloadMegaFileToPath(child, tmpFilePath, onProgress);
-            const zip = new AdmZip(tmpFilePath);
-            zip.extractAllTo(destDir, true);
+            await extractArchive(tmpFilePath, destDir);
         } else {
             await downloadMegaFileToPath(child, path.join(destDir, child.name), onProgress);
         }
@@ -117,15 +150,17 @@ async function installFromMega({ url, contentType, mainWindow, onProgress }) {
         await root.loadAttributes();
 
         if (root.directory) {
+            if (!root.children || !root.children.length) {
+                throw new Error('Ce dossier Mega est vide, rien à installer.');
+            }
             // Lien de dossier Mega : le contenu va directement dans content/cars (ou tracks)
             await downloadMegaFolderRecursive(root, destContentDir, tmpDir, onProgress);
         } else {
-            const tmpFilePath = path.join(tmpDir, root.name || 'download.zip');
+            const tmpFilePath = path.join(tmpDir, root.name || 'download');
             await downloadMegaFileToPath(root, tmpFilePath, onProgress);
 
-            if (tmpFilePath.toLowerCase().endsWith('.zip')) {
-                const zip = new AdmZip(tmpFilePath);
-                zip.extractAllTo(destContentDir, true);
+            if (isArchive(tmpFilePath)) {
+                await extractArchive(tmpFilePath, destContentDir);
             } else {
                 fs.copyFileSync(tmpFilePath, path.join(destContentDir, root.name));
             }
