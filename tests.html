@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .car-card { margin-bottom: 18px; }
+        .car-card h3 { font-size: 19px; margin-bottom: 6px; }
+        .car-card .desc { color: var(--text-dim); font-size: 14px; margin-bottom: 16px; }
+        .car-card .mega-link { display: inline-block; margin-bottom: 14px; font-size: 13px; }
+        .feedback-form { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+        .feedback-form textarea {
+            flex: 1;
+            min-width: 220px;
+            min-height: 60px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+        }
+        .approve-row { display: flex; gap: 8px; }
+        .status-note { margin-top: 10px; font-size: 13px; color: var(--success); }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <span class="eyebrow">Réservé aux testeurs</span>
+        <h1 class="page-title">Tests Voitures</h1>
+        <p class="page-subtitle">Donne ton avis avant la sortie officielle</p>
+
+        <div id="carsList">Chargement...</div>
+    </div>
+
+    <script>
+        async function renderCars(cars) {
+            const testing = cars.filter(c => c.status === 'testing');
+            const list = document.getElementById('carsList');
+
+            if (!testing.length) {
+                list.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture en attente de test pour le moment.</p>';
+                return;
+            }
+
+            const { user } = window.parent.getSession();
+
+            // conserve les notes en cours de frappe avant de reconstruire la liste
+            const drafts = {};
+            testing.forEach(car => {
+                const ta = document.getElementById(`notes-${car.id}`);
+                if (ta) drafts[car.id] = ta.value;
+            });
+
+            list.innerHTML = (await Promise.all(testing.map(async car => {
+                const feedback = await window.parent.listCarFeedback(car.id);
+                const mine = feedback.find(f => f.uid === user.uid);
+                const noteValue = drafts[car.id] !== undefined ? drafts[car.id] : ((mine && mine.notes) || '');
+                return `
+                    <div class="card car-card">
+                        <h3>${car.name}</h3>
+                        <div class="desc">${car.description || ''}</div>
+                        ${car.megaLink ? `<a class="mega-link" href="#" onclick="openMega('${car.megaLink}'); return false;">⬇️ Télécharger sur Mega</a><br>` : ''}
+                        <div class="feedback-form">
+                            <textarea id="notes-${car.id}" placeholder="Tes remarques...">${noteValue}</textarea>
+                            <div class="approve-row">
+                                <button class="btn btn-primary" onclick="submitFeedback('${car.id}', true)">👍 Validée</button>
+                                <button class="btn btn-secondary" onclick="submitFeedback('${car.id}', false)">👎 À revoir</button>
+                            </div>
+                        </div>
+                        <div class="status-note" id="status-${car.id}">${mine ? `Ton dernier avis : ${mine.approved ? 'Validée ✅' : 'À revoir ❌'}` : ''}</div>
+                    </div>
+                `;
+            }))).join('');
+        }
+
+        function openMega(url) {
+            window.open(url, '_blank');
+        }
+
+        async function submitFeedback(carId, approved) {
+            const notes = document.getElementById(`notes-${carId}`).value;
+            await window.parent.submitCarFeedback(carId, approved, notes);
+            document.getElementById(`status-${carId}`).textContent = 'Avis enregistré : ' + (approved ? 'Validée ✅' : 'À revoir ❌');
+        }
+
+        let carsUnsub = null;
+
+        window.onload = function() {
+            carsUnsub = window.parent.listenCars(renderCars);
+        };
+
+        window.onunload = function() {
+            if (carsUnsub) carsUnsub();
+        };
+    </script>
+</body>
+</html>

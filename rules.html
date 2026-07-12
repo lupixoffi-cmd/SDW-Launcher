@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .page { max-width: 780px; }
+        .rules-panel h2 {
+            font-size: 16px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+        .rules-panel h2:not(:first-child) { margin-top: 30px; }
+        .rules-panel ul { margin: 0; padding-left: 20px; color: var(--text-dim); line-height: 1.9; }
+        .rules-panel li { font-size: 15px; }
+        .rules-panel li::marker { color: var(--accent); }
+
+        .accept-row {
+            margin-top: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-align: center;
+            flex-direction: column;
+        }
+        .accept-row label {
+            font-size: 15px;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .accept-row input[type="checkbox"] {
+            width: 19px;
+            height: 19px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <span class="eyebrow">Avant de commencer</span>
+        <h1 class="page-title">Règles du Serveur</h1>
+        <p class="page-subtitle">Merci de lire attentivement avant d'accéder au launcher</p>
+
+        <div class="panel rules-panel">
+            <h2>Règles Générales</h2>
+            <ul>
+                <li>Respecte les autres joueurs</li>
+                <li>Pas de cheat / hack</li>
+                <li>Pas de spam / flood dans le chat</li>
+                <li>Conduite dangereuse autorisée uniquement sur les serveurs cut-up</li>
+            </ul>
+
+            <h2>Règles Discord</h2>
+            <ul>
+                <li>Pas d'insultes ou de harcèlement</li>
+                <li>Utilise les channels appropriés</li>
+                <li>Pas de publicité sans autorisation</li>
+            </ul>
+        </div>
+
+        <div class="accept-row">
+            <label>
+                <input type="checkbox" id="acceptRules">
+                J'ai lu et j'accepte les règles du serveur SDW
+            </label>
+            <button id="continueBtn" class="btn btn-primary" onclick="acceptRules()" disabled>
+                Accepter & Accéder à l'Application
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const checkbox = document.getElementById('acceptRules');
+        const button = document.getElementById('continueBtn');
+
+        checkbox.addEventListener('change', () => {
+            button.disabled = !checkbox.checked;
+        });
+
+        function acceptRules() {
+            if (checkbox.checked) {
+                window.parent.acceptRules();
+            }
+        }
+    </script>
+</body>
+</html>

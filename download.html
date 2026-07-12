@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .section-title {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin: 40px 0 18px;
+        }
+        .section-title:first-of-type { margin-top: 0; }
+        .pack-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
+        }
+        .pack-card .pack-icon { font-size: 30px; }
+        .pack-card h3 { font-size: 17px; font-weight: 600; font-family: 'Inter', sans-serif; }
+        #status {
+            margin-top: 36px;
+            font-size: 14px;
+            min-height: 24px;
+            color: var(--success);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <span class="eyebrow">Contenu</span>
+        <h1 class="page-title">Téléchargements</h1>
+        <p class="page-subtitle">Choisis tes packs et installe-les dans Assetto Corsa</p>
+
+        <div class="section-title">Voitures Sorties <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
+        <div class="grid grid-3" id="releasedCars"></div>
+
+        <div class="section-title">Packs Voitures</div>
+        <div class="grid grid-3">
+            <div class="card pack-card">
+                <div class="pack-icon">🚗</div>
+                <h3>Traffic Car Pack</h3>
+                <button class="btn btn-secondary" onclick="openLink('traffic')">Télécharger</button>
+            </div>
+            <div class="card pack-card">
+                <div class="pack-icon">🛞</div>
+                <h3>WTF Car Pack</h3>
+                <button class="btn btn-secondary" onclick="openLink('wtf')">Télécharger</button>
+            </div>
+            <div class="card pack-card">
+                <div class="pack-icon">🏎️</div>
+                <h3>Grip Car Pack</h3>
+                <button class="btn btn-secondary" onclick="openLink('grip')">Télécharger</button>
+            </div>
+        </div>
+
+        <div class="section-title">Packs Maps</div>
+        <div class="grid grid-3">
+            <div class="card pack-card">
+                <div class="pack-icon">🗾</div>
+                <h3>Shutoko</h3>
+                <button class="btn btn-secondary" onclick="openLink('shutoko')">Télécharger</button>
+            </div>
+            <div class="card pack-card">
+                <div class="pack-icon">🏯</div>
+                <h3>Tsukuba</h3>
+                <button class="btn btn-secondary" onclick="openLink('tsukuba')">Télécharger</button>
+            </div>
+            <div class="card pack-card">
+                <div class="pack-icon">🌉</div>
+                <h3>Brooklyn Park</h3>
+                <button class="btn btn-secondary" onclick="openLink('brooklyn')">Télécharger</button>
+            </div>
+            <div class="card pack-card">
+                <div class="pack-icon">⛰️</div>
+                <h3>Transfagarasan</h3>
+                <button class="btn btn-secondary" onclick="openLink('transfagarasan')">Télécharger</button>
+            </div>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function renderReleasedCars(cars) {
+            const released = cars.filter(c => c.status === 'released');
+            const container = document.getElementById('releasedCars');
+            if (!released.length) {
+                container.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture sortie pour le moment.</p>';
+                return;
+            }
+            container.innerHTML = released.map(car => `
+                <div class="card pack-card">
+                    <div class="pack-icon">🏁</div>
+                    <h3>${car.name}</h3>
+                    ${car.description ? `<p style="color:var(--text-dim); font-size:13px; margin:0;">${car.description}</p>` : ''}
+                    ${car.megaLink ? `<button class="btn btn-secondary" onclick="window.open('${car.megaLink}', '_blank')">Télécharger</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        let releasedCarsUnsub = window.parent.listenCars(renderReleasedCars);
+        window.onunload = function() {
+            if (releasedCarsUnsub) releasedCarsUnsub();
+        };
+
+        function openLink(type) {
+            let url = '';
+
+            if (type === 'traffic') url = "https://mega.nz/folder/y8pD2BzC#iFkH7ZF3I4Ae6ksTD1jQ-g";
+            else if (type === 'wtf') url = "https://mega.nz/folder/zhxxUQDA#gH42MW0m6QMjppRBICbUOA";
+            else if (type === 'grip') url = "https://mega.nz/folder/Xk4DQRIZ#XRry3USvVB6Nor4_v6a9AQ";
+            else if (type === 'shutoko') url = "https://mega.nz/file/OwYhGLLI#pkp5nUZsHEvkT6YeGnP8XjPmQPpK8Gz-XU6kqWVOjGY";
+            else if (type === 'tsukuba') url = "https://mega.nz/file/LlJXXSRZ#WVqrRk-NGTKYLIjiOQ_I5_jg5kskjHU705El-j9AE6U";
+            else if (type === 'brooklyn') url = "https://mega.nz/file/mpICzCJR#IPgJnIWvG78_3SI4eQNXhpvcZD1nq8ktRiwmoayX-TE";
+            else if (type === 'transfagarasan') url = "https://mega.nz/file/HhIDXSZL#WNwXelWSll_btd2WDwpa2mA0IEfjfg_6NpA2aNaz2UE";
+
+            const name = type.charAt(0).toUpperCase() + type.slice(1) + " Pack";
+
+            window.open(url, '_blank');
+            document.getElementById('status').innerHTML = `✅ Lien pour ${name} ouvert — télécharge et extrait le fichier.`;
+        }
+    </script>
+</body>
+</html>

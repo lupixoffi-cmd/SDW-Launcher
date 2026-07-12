@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .server-card h2 { font-size: 22px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+        .server-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-bottom: 20px; }
+        .server-info .item { font-size: 14px; color: var(--text-dim); }
+        .server-info .item b { color: var(--text); font-weight: 600; display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-faint); margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <span class="eyebrow">Assetto Corsa</span>
+        <h1 class="page-title">Nos Serveurs</h1>
+        <p class="page-subtitle">Rejoins un serveur en un clic via Content Manager</p>
+
+        <div class="grid grid-2">
+            <div class="card server-card">
+                <h2>Grip - Shutoko <span class="badge badge-online"><span class="badge-dot"></span>En ligne</span></h2>
+                <div class="server-info">
+                    <div class="item"><b>Map</b>Shutoko Revival Project</div>
+                    <div class="item"><b>Style</b>Grip / Cut-up</div>
+                    <div class="item"><b>Joueurs Max</b>24</div>
+                </div>
+                <button class="btn btn-primary" onclick="joinServer()">🏁 Rejoindre le Serveur</button>
+            </div>
+
+            <div class="card server-card">
+                <h2>Grip - Shutoko <span class="badge badge-online"><span class="badge-dot"></span>En ligne</span></h2>
+                <div class="server-info">
+                    <div class="item"><b>Map</b>Shutoko Revival Project</div>
+                    <div class="item"><b>Style</b>Grip / Cut-up</div>
+                    <div class="item"><b>Joueurs Max</b>24</div>
+                </div>
+                <button class="btn btn-primary" onclick="joinServer()">🏁 Rejoindre le Serveur</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function joinServer() {
+            const link = "https://acstuff.club/s/q:race/online/join?ip=37.187.140.88&httpPort=28279&password=YFZCXk0FHgMBXFtIUUI%3d";
+            window.open(link, "_blank");
+        }
+    </script>
+</body>
+</html>

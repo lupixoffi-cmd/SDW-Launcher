@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body {
+            background: transparent;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-box { text-align: center; max-width: 420px; padding: 20px; }
+        .login-box h1 { font-size: 34px; margin-bottom: 10px; }
+        .login-box p { color: var(--text-dim); font-size: 16px; margin-bottom: 32px; }
+        .btn-google {
+            background: #ffffff;
+            color: #1f1f1f;
+        }
+        .btn-google:hover { background: #f0f0f0; }
+        .or-sep {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-faint);
+            font-size: 13px;
+            margin: 22px 0;
+        }
+        .or-sep::before, .or-sep::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--panel-border);
+        }
+        #loginStatus { margin-top: 18px; font-size: 14px; color: var(--text-dim); min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <span class="eyebrow">Bienvenue</span>
+        <h1>Connexion à SDW</h1>
+        <p>Crée ton compte ou connecte-toi avec Gmail pour accéder au launcher</p>
+
+        <button class="btn btn-google" onclick="loginWithGoogle()" style="width:100%;">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.1 0-11.3-3.6-13.5-8.8-.6-1.6-.9-3.3-.9-5s.3-3.4.9-5C12.7 11.6 17.9 8 24 8c3.1 0 5.9 1.1 8.1 3l6-6C34.5 1.9 29.5 0 24 0 14.6 0 6.5 5.4 2.6 13.2L2.5 13c-1.6 3.2-2.5 6.8-2.5 11s.9 7.8 2.5 11l.1-.2C6.5 42.6 14.6 48 24 48c5.3 0 10.2-1.7 14-4.6l-6.2-5.1C29.7 40 27 41 24 41c-5.3 0-9.7-2.6-11.3-6.6l-6.6 5.1C9.9 44.6 16.4 48 24 48c11 0 20-8.3 20-20 0-1.2-.1-2.4-.4-3.5z"/></svg>
+            Se connecter avec Gmail
+        </button>
+
+        <div id="loginStatus"></div>
+
+        <div class="or-sep">ou</div>
+
+        <button class="btn btn-discord" onclick="discordLogin()" style="width:100%;">💬 Rejoindre le Discord</button>
+    </div>
+
+    <script>
+        async function loginWithGoogle() {
+            document.getElementById('loginStatus').textContent = 'Ouverture de la fenêtre Google...';
+            try {
+                await window.parent.startGoogleLogin();
+            } catch (e) {
+                document.getElementById('loginStatus').textContent = 'Erreur : ' + e.message;
+            }
+        }
+
+        function discordLogin() {
+            const oauthUrl = "https://discord.com/api/oauth2/authorize?client_id=1503081347512799293&redirect_uri=https://join-lupix.up.railway.app/callback&response_type=code&scope=identify%20guilds.join";
+            window.open(oauthUrl, '_blank');
+        }
+    </script>
+</body>
+</html>

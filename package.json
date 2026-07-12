@@ -1,0 +1,28 @@
+{
+  "name": "sdw-launcher",
+  "productName": "SDW Launcher",
+  "version": "1.0.0",
+  "description": "Launcher Officiel SDW - Assetto Corsa",
+  "main": "index.js",
+  "author": "SDW Team",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "axios": "^1.7.2",
+    "electron-squirrel-startup": "^1.0.0",
+    "firebase": "^12.16.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.2",
+    "@electron-forge/plugin-fuses": "^7.11.2",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^31.0.0"
+  }
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body {
+            background: transparent;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .setup-box { text-align: center; max-width: 560px; width: 100%; padding: 20px; }
+        .setup-box h1 { font-size: 32px; margin-bottom: 8px; }
+        .setup-box > p { color: var(--text-dim); font-size: 16px; margin-bottom: 36px; }
+        #checks { text-align: left; }
+        .hint { color: #ffaa00; margin-top: 18px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <script>
+        const { ipcRenderer } = require('electron');
+    </script>
+
+    <div class="setup-box">
+        <span class="eyebrow">Premier lancement</span>
+        <h1>Configuration Initiale</h1>
+        <p>Le launcher vérifie votre installation...</p>
+
+        <div id="checks" class="panel"></div>
+
+        <button id="continueBtn" class="btn btn-primary" onclick="continueToHome()" style="margin-top: 32px;" disabled>
+            Continuer vers l'Accueil
+        </button>
+    </div>
+
+    <script>
+        const checksContainer = document.getElementById('checks');
+        const continueBtn = document.getElementById('continueBtn');
+
+        async function runChecks() {
+            checksContainer.innerHTML = '<p style="color:var(--text-dim); text-align:center;">Vérification en cours...</p>';
+
+            try {
+                const result = await ipcRenderer.invoke('detect-paths');
+
+                let html = '';
+                html += row(result.steam, 'Steam');
+                html += row(result.assettoCorsa, 'Assetto Corsa', result.assettoCorsa);
+                html += row(result.contentManager, 'Content Manager');
+
+                checksContainer.innerHTML = html;
+
+                if (result.assettoCorsa && result.contentManager) {
+                    continueBtn.disabled = false;
+                } else {
+                    checksContainer.innerHTML += '<p class="hint">⚠️ Certains éléments sont manquants. Corrigez-les puis relancez le launcher.</p>';
+                }
+            } catch (e) {
+                checksContainer.innerHTML = '<p style="color:#ff5555; text-align:center;">Erreur lors de la détection.</p>';
+            }
+        }
+
+        function row(ok, label, path) {
+            return `<div class="check-row">
+                <span class="check-icon">${ok ? '✅' : '❌'}</span>
+                <b>${label}</b>
+                ${path ? `<span class="check-path">${path}</span>` : ''}
+            </div>`;
+        }
+
+        function continueToHome() {
+            window.parent.finishSetup();
+        }
+
+        window.onload = runChecks;
+    </script>
+</body>
+</html>

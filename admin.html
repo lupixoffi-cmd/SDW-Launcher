@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .section-title {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin: 40px 0 18px;
+        }
+        .section-title:first-of-type { margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 14px;
+        }
+        th { color: var(--text-faint); text-transform: uppercase; font-size: 12px; letter-spacing: .5px; }
+        select {
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-family: 'Inter', sans-serif;
+        }
+        .car-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .car-form input {
+            flex: 1;
+            min-width: 180px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
+        .car-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .car-row .name { font-weight: 600; }
+        .car-row .feedback-count { color: var(--text-dim); font-size: 13px; margin-left: 10px; }
+        .stats-row { margin-bottom: 22px; }
+        .verified-yes { color: var(--success); }
+        .verified-no { color: var(--text-faint); }
+        td.muted { color: var(--text-faint); font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <span class="eyebrow">Réservé aux admins</span>
+        <h1 class="page-title">Administration</h1>
+        <p class="page-subtitle">Gère les membres et les voitures en test</p>
+
+        <div class="section-title">Ajouter une voiture à tester</div>
+        <div class="car-form">
+            <input type="text" id="carName" placeholder="Nom de la voiture">
+            <input type="text" id="carDesc" placeholder="Description courte">
+            <input type="text" id="carMega" placeholder="Lien Mega">
+            <button class="btn btn-primary" onclick="addCar()">Ajouter</button>
+        </div>
+
+        <div class="section-title">Voitures <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
+        <div class="panel" id="carsList">Chargement...</div>
+
+        <div class="section-title">Membres</div>
+        <div class="grid grid-3 stats-row">
+            <div class="card stat"><div class="num" id="countTotal">-</div><div class="label">Membres</div></div>
+            <div class="card stat"><div class="num" id="countTester">-</div><div class="label">Testeurs</div></div>
+            <div class="card stat"><div class="num" id="countAdmin">-</div><div class="label">Admins</div></div>
+        </div>
+        <div class="panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Email vérifié</th>
+                        <th>Rôle</th>
+                        <th>Inscrit le</th>
+                        <th>Dernière connexion</th>
+                        <th>Dernière IP</th>
+                    </tr>
+                </thead>
+                <tbody id="usersBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function formatDate(ts) {
+            if (!ts || typeof ts.toDate !== 'function') return '-';
+            return ts.toDate().toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+
+        async function loadUsers() {
+            const users = await window.parent.listAllUsers();
+            const { user: me } = window.parent.getSession();
+
+            document.getElementById('countTotal').textContent = users.length;
+            document.getElementById('countTester').textContent = users.filter(u => u.role === 'tester').length;
+            document.getElementById('countAdmin').textContent = users.filter(u => u.role === 'admin').length;
+
+            const body = document.getElementById('usersBody');
+            body.innerHTML = users.map(u => {
+                const isMe = me && u.uid === me.uid;
+                return `
+                <tr>
+                    <td>${u.displayName || '-'}${isMe ? ' <span class="muted">(toi)</span>' : ''}</td>
+                    <td>${u.email}</td>
+                    <td class="${u.emailVerified ? 'verified-yes' : 'verified-no'}">${u.emailVerified ? '✅' : '—'}</td>
+                    <td>
+                        <select onchange="changeRole('${u.uid}', this.value)" ${isMe ? 'disabled title="Tu ne peux pas changer ton propre rôle"' : ''}>
+                            <option value="member" ${u.role === 'member' ? 'selected' : ''}>Membre</option>
+                            <option value="tester" ${u.role === 'tester' ? 'selected' : ''}>Testeur</option>
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </td>
+                    <td class="muted">${formatDate(u.createdAt)}</td>
+                    <td class="muted">${formatDate(u.lastLoginAt)}</td>
+                    <td class="muted">${u.lastIp || '-'}</td>
+                </tr>
+            `;
+            }).join('');
+        }
+
+        async function changeRole(uid, role) {
+            await window.parent.setUserRole(uid, role);
+        }
+
+        async function addCar() {
+            const name = document.getElementById('carName').value.trim();
+            const desc = document.getElementById('carDesc').value.trim();
+            const mega = document.getElementById('carMega').value.trim();
+            if (!name) return;
+            await window.parent.createCar(name, desc, mega);
+            document.getElementById('carName').value = '';
+            document.getElementById('carDesc').value = '';
+            document.getElementById('carMega').value = '';
+        }
+
+        function renderCars(cars) {
+            const list = document.getElementById('carsList');
+            if (!cars.length) {
+                list.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture pour le moment.</p>';
+                return;
+            }
+            Promise.all(cars.map(async car => {
+                const feedback = await window.parent.listCarFeedback(car.id);
+                const approved = feedback.filter(f => f.approved).length;
+                return `
+                    <div class="car-row">
+                        <div>
+                            <span class="name">${car.name}</span>
+                            <span class="badge ${car.status === 'released' ? 'badge-online' : ''}" style="margin-left:10px;">${car.status}</span>
+                            <span class="feedback-count">${approved}/${feedback.length} testeurs OK</span>
+                            ${car.megaLink ? `<br><a href="#" onclick="openMega('${car.megaLink}'); return false;" style="color:var(--accent); font-size:13px;">${car.megaLink}</a>` : ''}
+                        </div>
+                        <div>
+                            ${car.status === 'testing'
+                                ? `<button class="btn btn-secondary" onclick="releaseCar('${car.id}')">Sortir la voiture</button>`
+                                : `<button class="btn btn-secondary" onclick="retestCar('${car.id}')">Remettre en test</button>`}
+                            <button class="btn btn-secondary" onclick="removeCar('${car.id}')" style="margin-left:8px;">Supprimer</button>
+                        </div>
+                    </div>
+                `;
+            })).then(rows => { list.innerHTML = rows.join(''); });
+        }
+
+        function openMega(url) {
+            window.open(url, '_blank');
+        }
+
+        async function releaseCar(id) {
+            await window.parent.setCarStatus(id, 'released');
+        }
+
+        async function retestCar(id) {
+            await window.parent.setCarStatus(id, 'testing');
+        }
+
+        async function removeCar(id) {
+            if (!confirm('Supprimer définitivement cette voiture ?')) return;
+            await window.parent.deleteCar(id);
+        }
+
+        let carsUnsub = null;
+
+        window.onload = function() {
+            loadUsers();
+            carsUnsub = window.parent.listenCars(renderCars);
+        };
+
+        window.onunload = function() {
+            if (carsUnsub) carsUnsub();
+        };
+    </script>
+</body>
+</html>

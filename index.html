@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SDW Launcher</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            display: flex;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(255,45,58,0.10), transparent 45%),
+                linear-gradient(180deg, rgba(6,6,9,0.92), rgba(6,6,9,0.96)),
+                url('logo.png') center/cover no-repeat fixed;
+        }
+
+        .sidebar {
+            width: 230px;
+            min-width: 230px;
+            height: 100vh;
+            background: rgba(8,8,11,0.9);
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            padding: 22px 16px;
+            backdrop-filter: blur(6px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px 24px;
+            cursor: pointer;
+        }
+        .brand img { height: 34px; }
+        .brand span {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 19px;
+            letter-spacing: 1px;
+        }
+
+        .nav-links { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-faint);
+            font-size: 15px;
+            font-weight: 500;
+            pointer-events: none;
+            transition: background .15s ease, color .15s ease;
+        }
+        .nav-links a .ico { font-size: 17px; width: 20px; text-align: center; }
+        .nav-links a.active {
+            color: var(--text-dim);
+            pointer-events: auto;
+        }
+        .nav-links a.active:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .nav-links a.active.current {
+            background: var(--accent-dim);
+            color: var(--text);
+            border-left: 3px solid var(--accent);
+        }
+        .nav-links a.role-gated { display: none; }
+        .nav-links .nav-sep {
+            height: 1px;
+            background: var(--panel-border);
+            margin: 10px 6px;
+        }
+
+        .sidebar-footer {
+            padding: 12px 6px 0;
+            border-top: 1px solid var(--panel-border);
+        }
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+        }
+        .user-card img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        .user-card .info { flex: 1; min-width: 0; }
+        .user-card .name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-card .role {
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--text-faint);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+        }
+        .logout-btn:hover { color: var(--accent); }
+        .version-tag {
+            font-size: 11px;
+            color: var(--text-faint);
+            padding: 10px 8px 0;
+        }
+
+        .content { flex: 1; height: 100vh; }
+        iframe { border: none; width: 100%; height: 100%; background: transparent; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="brand" onclick="loadPage('home')">
+            <img src="nav-logo.png" alt="SDW">
+            <span>SDW LAUNCHER</span>
+        </div>
+        <div class="nav-links" id="menu">
+            <a href="#" data-page="home" onclick="loadPage('home')"><span class="ico">🏠</span>Accueil</a>
+            <a href="#" data-page="servers" onclick="loadPage('servers')"><span class="ico">🏁</span>Serveurs</a>
+            <a href="#" data-page="download" onclick="loadPage('download')"><span class="ico">⬇️</span>Téléchargements</a>
+            <a href="#" data-page="rules" onclick="loadPage('rules')"><span class="ico">📋</span>Règles</a>
+            <a href="#" data-page="about" onclick="loadPage('about')"><span class="ico">ℹ️</span>À Propos</a>
+            <div class="nav-sep"></div>
+            <a href="#" data-page="profile" onclick="loadPage('profile')"><span class="ico">👤</span>Mon Profil</a>
+            <a href="#" data-page="tests" class="role-gated" data-role="tester" onclick="loadPage('tests')"><span class="ico">🧪</span>Tests Voitures</a>
+            <a href="#" data-page="admin" class="role-gated" data-role="admin" onclick="loadPage('admin')"><span class="ico">🛠️</span>Administration</a>
+        </div>
+        <div class="sidebar-footer" id="sidebarFooter">
+            <div class="version-tag">SDW Launcher v1.0.0</div>
+        </div>
+    </div>
+    <div class="content">
+        <iframe id="pageFrame"></iframe>
+    </div>
+    <script>
+        const { initializeApp } = require('firebase/app');
+        const { getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } = require('firebase/auth');
+        const { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot, serverTimestamp } = require('firebase/firestore');
+        const { ipcRenderer } = require('electron');
+        const { firebaseConfig } = require('./assets/firebase-config.js');
+
+        const fbApp = initializeApp(firebaseConfig);
+        const auth = getAuth(fbApp);
+        const db = getFirestore(fbApp);
+
+        setPersistence(auth, browserLocalPersistence).catch(err => {
+            console.error('Persistence Firebase impossible :', err);
+        });
+
+        let rulesAccepted = localStorage.getItem('rulesAccepted') === 'true';
+        let currentUser = null;
+        let currentProfile = null;
+
+        function setCurrent(page) {
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.toggle('current', link.dataset.page === page);
+            });
+        }
+
+        function loadPage(page) {
+            if (!currentUser) {
+                document.getElementById('pageFrame').src = 'login.html';
+                return;
+            }
+            if (!rulesAccepted) {
+                document.getElementById('pageFrame').src = 'rules.html';
+                return;
+            }
+            document.getElementById('pageFrame').src = page + '.html';
+            setCurrent(page);
+        }
+
+        function enableMenu() {
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.add('active'));
+        }
+
+        function disableMenu() {
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+        }
+
+        function updateNavForRole() {
+            const role = currentProfile ? currentProfile.role : null;
+            document.querySelectorAll('.role-gated').forEach(link => {
+                const needed = link.dataset.role;
+                const visible = role === 'admin' || role === needed;
+                link.style.display = visible ? 'flex' : 'none';
+            });
+        }
+
+        function renderUserCard() {
+            const footer = document.getElementById('sidebarFooter');
+            if (!currentUser) {
+                footer.innerHTML = '<div class="version-tag">SDW Launcher v1.0.0</div>';
+                return;
+            }
+            const photo = currentUser.photoURL || 'nav-logo.png';
+            const name = currentUser.displayName || currentUser.email;
+            const role = currentProfile ? currentProfile.role : 'member';
+            footer.innerHTML = `
+                <div class="user-card">
+                    <img src="${photo}" alt="avatar">
+                    <div class="info">
+                        <div class="name">${name}</div>
+                        <div class="role">${role}</div>
+                    </div>
+                    <button class="logout-btn" onclick="window.logout()" title="Déconnexion">⏻</button>
+                </div>
+                <div class="version-tag">SDW Launcher v1.0.0</div>
+            `;
+        }
+
+        async function routeInitial() {
+            if (!currentUser) {
+                disableMenu();
+                renderUserCard();
+                document.getElementById('pageFrame').src = 'login.html';
+            } else if (!rulesAccepted) {
+                renderUserCard();
+                loadPage('rules');
+            } else {
+                enableMenu();
+                updateNavForRole();
+                renderUserCard();
+                loadPage('home');
+            }
+        }
+
+        let silentLoginTried = false;
+
+        async function trySilentLogin() {
+            try {
+                const result = await ipcRenderer.invoke('google-silent-signin');
+                if (result && result.idToken) {
+                    const credential = GoogleAuthProvider.credential(result.idToken);
+                    await signInWithCredential(auth, credential);
+                    return true;
+                }
+            } catch (e) {
+                console.error('Reconnexion silencieuse échouée :', e);
+            }
+            return false;
+        }
+
+        async function getPublicIp() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                return data.ip || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            if (user) {
+                const ref = doc(db, 'users', user.uid);
+                let snap = await getDoc(ref);
+                if (!snap.exists()) {
+                    await setDoc(ref, {
+                        email: user.email,
+                        displayName: user.displayName,
+                        photoURL: user.photoURL,
+                        bio: '',
+                        role: 'member',
+                        createdAt: serverTimestamp()
+                    });
+                } else {
+                    await updateDoc(ref, {
+                        displayName: user.displayName,
+                        photoURL: user.photoURL
+                    });
+                }
+                snap = await getDoc(ref);
+                currentProfile = snap.data();
+
+                const ip = await getPublicIp();
+                await setDoc(doc(db, 'userMeta', user.uid), {
+                    lastLoginAt: serverTimestamp(),
+                    lastIp: ip,
+                    emailVerified: user.emailVerified
+                }, { merge: true });
+
+                routeInitial();
+            } else {
+                currentProfile = null;
+                if (!silentLoginTried) {
+                    silentLoginTried = true;
+                    const ok = await trySilentLogin();
+                    if (!ok) routeInitial();
+                    // si ok, onAuthStateChanged sera redéclenché avec l'utilisateur restauré
+                } else {
+                    routeInitial();
+                }
+            }
+        });
+
+        window.startGoogleLogin = async function() {
+            try {
+                const { idToken } = await ipcRenderer.invoke('google-signin');
+                const credential = GoogleAuthProvider.credential(idToken);
+                await signInWithCredential(auth, credential);
+            } catch (e) {
+                alert('Connexion échouée : ' + e.message);
+            }
+        };
+
+        window.logout = async function() {
+            await ipcRenderer.invoke('google-signout');
+            signOut(auth);
+        };
+
+        window.acceptRules = function() {
+            rulesAccepted = true;
+            localStorage.setItem('rulesAccepted', 'true');
+            enableMenu();
+            updateNavForRole();
+            loadPage('home');
+        };
+
+        window.getSession = function() {
+            return { user: currentUser, profile: currentProfile };
+        };
+
+        window.refreshProfile = async function() {
+            if (!currentUser) return null;
+            const snap = await getDoc(doc(db, 'users', currentUser.uid));
+            currentProfile = snap.data();
+            updateNavForRole();
+            renderUserCard();
+            return currentProfile;
+        };
+
+        window.updateMyBio = async function(bio) {
+            if (!currentUser) return;
+            await updateDoc(doc(db, 'users', currentUser.uid), { bio });
+            currentProfile.bio = bio;
+        };
+
+        window.listAllUsers = async function() {
+            const snap = await getDocs(collection(db, 'users'));
+            const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+
+            let metaMap = {};
+            try {
+                const metaSnap = await getDocs(collection(db, 'userMeta'));
+                metaSnap.docs.forEach(d => { metaMap[d.id] = d.data(); });
+            } catch (e) {
+                // Réservé aux admins : ignoré silencieusement pour les autres rôles
+            }
+
+            return users.map(u => ({ ...u, ...(metaMap[u.uid] || {}) }));
+        };
+
+        window.setUserRole = async function(uid, role) {
+            await updateDoc(doc(db, 'users', uid), { role });
+        };
+
+        window.listCars = async function() {
+            const snap = await getDocs(collection(db, 'cars'));
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        };
+
+        window.listenCars = function(callback) {
+            return onSnapshot(collection(db, 'cars'), (snap) => {
+                callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            }, (error) => {
+                console.error('listenCars error :', error);
+            });
+        };
+
+        window.createCar = async function(name, description, megaLink) {
+            await addDoc(collection(db, 'cars'), {
+                name, description, megaLink: megaLink || '', status: 'testing', createdAt: serverTimestamp()
+            });
+        };
+
+        window.setCarStatus = async function(carId, status) {
+            await updateDoc(doc(db, 'cars', carId), { status });
+        };
+
+        window.deleteCar = async function(carId) {
+            await deleteDoc(doc(db, 'cars', carId));
+        };
+
+        window.submitCarFeedback = async function(carId, approved, notes) {
+            if (!currentUser) return;
+            await setDoc(doc(db, 'cars', carId, 'feedback', currentUser.uid), {
+                approved,
+                notes,
+                testerName: currentUser.displayName || currentUser.email,
+                updatedAt: serverTimestamp()
+            });
+        };
+
+        window.listCarFeedback = async function(carId) {
+            const snap = await getDocs(collection(db, 'cars', carId, 'feedback'));
+            return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        };
+
+        window.firestoreDb = db;
+    </script>
+</body>
+</html>

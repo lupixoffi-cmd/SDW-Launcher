@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        body { background: transparent; }
+        .hero {
+            text-align: center;
+            padding: 100px 20px 40px;
+        }
+        .hero .eyebrow { display: block; margin-bottom: 14px; }
+        .hero h1 {
+            font-size: 64px;
+            background: linear-gradient(90deg, #ffffff, #ffb3b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .hero p.sub {
+            font-size: 19px;
+            color: var(--text-dim);
+            margin: 18px 0 36px;
+        }
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin: 50px 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <span class="eyebrow">Launcher Officiel</span>
+        <h1>SDW / SHADOW</h1>
+        <p class="sub">Le launcher officiel des serveurs Assetto Corsa Shadow</p>
+
+        <button class="btn btn-primary" onclick="loadTop('servers')">🏁 Voir les Serveurs</button>
+        <button class="btn btn-secondary" onclick="loadTop('download')" style="margin-left: 14px;">⬇️ Téléchargements</button>
+
+        <div class="stats-row">
+            <div class="stat">
+                <div class="num">700+</div>
+                <div class="label">Membres</div>
+            </div>
+            <div class="stat">
+                <div class="num">2</div>
+                <div class="label">Serveurs</div>
+            </div>
+            <div class="stat">
+                <div class="num">24/7</div>
+                <div class="label">En Ligne</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadTop(page) {
+            window.parent.loadPage(page);
+        }
+    </script>
+</body>
+</html>
