@@ -29,7 +29,7 @@
 <body>
     <div class="page">
         <span class="eyebrow">Réservé aux testeurs</span>
-        <h1 class="page-title">Tests Voitures</h1>
+        <h1 class="page-title">Tests Contenu</h1>
         <p class="page-subtitle">Donne ton avis avant la sortie officielle</p>
 
         <div id="carsList">Chargement...</div>
@@ -41,7 +41,7 @@
             const list = document.getElementById('carsList');
 
             if (!testing.length) {
-                list.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture en attente de test pour le moment.</p>';
+                list.innerHTML = '<p style="color:var(--text-dim);">Aucun contenu en attente de test pour le moment.</p>';
                 return;
             }
 
@@ -58,9 +58,10 @@
                 const feedback = await window.parent.listCarFeedback(car.id);
                 const mine = feedback.find(f => f.uid === user.uid);
                 const noteValue = drafts[car.id] !== undefined ? drafts[car.id] : ((mine && mine.notes) || '');
+                const icon = car.category === 'track' ? '🗺️' : '🚗';
                 return `
                     <div class="card car-card">
-                        <h3>${car.name}</h3>
+                        <h3>${icon} ${car.name}</h3>
                         <div class="desc">${car.description || ''}</div>
                         ${car.megaLink ? `<a class="mega-link" href="#" onclick="openMega('${car.megaLink}'); return false;">⬇️ Télécharger sur Mega</a><br>` : ''}
                         <div class="feedback-form">

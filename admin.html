@@ -64,17 +64,21 @@
     <div class="page">
         <span class="eyebrow">Réservé aux admins</span>
         <h1 class="page-title">Administration</h1>
-        <p class="page-subtitle">Gère les membres et les voitures en test</p>
+        <p class="page-subtitle">Gère les membres et le contenu en test</p>
 
-        <div class="section-title">Ajouter une voiture à tester</div>
+        <div class="section-title">Ajouter un contenu à tester</div>
         <div class="car-form">
-            <input type="text" id="carName" placeholder="Nom de la voiture">
+            <select id="carCategory">
+                <option value="car">🚗 Voiture</option>
+                <option value="track">🗺️ Map</option>
+            </select>
+            <input type="text" id="carName" placeholder="Nom">
             <input type="text" id="carDesc" placeholder="Description courte">
             <input type="text" id="carMega" placeholder="Lien Mega">
             <button class="btn btn-primary" onclick="addCar()">Ajouter</button>
         </div>
 
-        <div class="section-title">Voitures <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
+        <div class="section-title">Contenu <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
         <div class="panel" id="carsList">Chargement...</div>
 
         <div class="section-title">Membres</div>
@@ -146,11 +150,12 @@
         }
 
         async function addCar() {
+            const category = document.getElementById('carCategory').value;
             const name = document.getElementById('carName').value.trim();
             const desc = document.getElementById('carDesc').value.trim();
             const mega = document.getElementById('carMega').value.trim();
             if (!name) return;
-            await window.parent.createCar(name, desc, mega);
+            await window.parent.createCar(name, desc, mega, category);
             document.getElementById('carName').value = '';
             document.getElementById('carDesc').value = '';
             document.getElementById('carMega').value = '';
@@ -159,23 +164,24 @@
         function renderCars(cars) {
             const list = document.getElementById('carsList');
             if (!cars.length) {
-                list.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture pour le moment.</p>';
+                list.innerHTML = '<p style="color:var(--text-dim);">Aucun contenu pour le moment.</p>';
                 return;
             }
             Promise.all(cars.map(async car => {
                 const feedback = await window.parent.listCarFeedback(car.id);
                 const approved = feedback.filter(f => f.approved).length;
+                const icon = car.category === 'track' ? '🗺️' : '🚗';
                 return `
                     <div class="car-row">
                         <div>
-                            <span class="name">${car.name}</span>
+                            <span class="name">${icon} ${car.name}</span>
                             <span class="badge ${car.status === 'released' ? 'badge-online' : ''}" style="margin-left:10px;">${car.status}</span>
                             <span class="feedback-count">${approved}/${feedback.length} testeurs OK</span>
                             ${car.megaLink ? `<br><a href="#" onclick="openMega('${car.megaLink}'); return false;" style="color:var(--accent); font-size:13px;">${car.megaLink}</a>` : ''}
                         </div>
                         <div>
                             ${car.status === 'testing'
-                                ? `<button class="btn btn-secondary" onclick="releaseCar('${car.id}')">Sortir la voiture</button>`
+                                ? `<button class="btn btn-secondary" onclick="releaseCar('${car.id}')">Sortir</button>`
                                 : `<button class="btn btn-secondary" onclick="retestCar('${car.id}')">Remettre en test</button>`}
                             <button class="btn btn-secondary" onclick="removeCar('${car.id}')" style="margin-left:8px;">Supprimer</button>
                         </div>

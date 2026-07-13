@@ -37,7 +37,7 @@
         <h1 class="page-title">Téléchargements</h1>
         <p class="page-subtitle">Choisis tes packs, ils s'installent directement dans Assetto Corsa</p>
 
-        <div class="section-title">Voitures Sorties <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
+        <div class="section-title">Contenu Sorti <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
         <div class="grid grid-3" id="releasedCars"></div>
 
         <div class="section-title">Packs Voitures</div>
@@ -115,17 +115,21 @@
             const released = cars.filter(c => c.status === 'released');
             const container = document.getElementById('releasedCars');
             if (!released.length) {
-                container.innerHTML = '<p style="color:var(--text-dim);">Aucune voiture sortie pour le moment.</p>';
+                container.innerHTML = '<p style="color:var(--text-dim);">Aucun contenu sorti pour le moment.</p>';
                 return;
             }
-            container.innerHTML = released.map(car => `
+            container.innerHTML = released.map(car => {
+                const contentType = car.category === 'track' ? 'track' : 'car';
+                const icon = contentType === 'track' ? '🗺️' : '🏁';
+                return `
                 <div class="card pack-card">
-                    <div class="pack-icon">🏁</div>
+                    <div class="pack-icon">${icon}</div>
                     <h3>${car.name}</h3>
                     ${car.description ? `<p style="color:var(--text-dim); font-size:13px; margin:0;">${car.description}</p>` : ''}
-                    ${car.megaLink ? `<button class="btn btn-secondary" onclick="installContent('${esc(car.megaLink)}', 'car', '${esc(car.name)}')">Installer</button>` : ''}
+                    ${car.megaLink ? `<button class="btn btn-secondary" onclick="installContent('${esc(car.megaLink)}', '${contentType}', '${esc(car.name)}')">Installer</button>` : ''}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         let releasedCarsUnsub = window.parent.listenCars(renderReleasedCars);

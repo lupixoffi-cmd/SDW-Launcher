@@ -389,9 +389,14 @@
             });
         };
 
-        window.createCar = async function(name, description, megaLink) {
+        window.createCar = async function(name, description, megaLink, category) {
             await addDoc(collection(db, 'cars'), {
-                name, description, megaLink: megaLink || '', status: 'testing', createdAt: serverTimestamp()
+                name,
+                description,
+                megaLink: megaLink || '',
+                category: category === 'track' ? 'track' : 'car',
+                status: 'testing',
+                createdAt: serverTimestamp()
             });
         };
 
