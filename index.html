@@ -294,6 +294,7 @@
                     emailVerified: user.emailVerified
                 }, { merge: true });
 
+                checkAutoRelease();
                 routeInitial();
             } else {
                 currentProfile = null;
@@ -403,6 +404,28 @@
         window.setCarStatus = async function(carId, status) {
             await updateDoc(doc(db, 'cars', carId), { status });
         };
+
+        const AUTO_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
+
+        async function checkAutoRelease() {
+            try {
+                const snap = await getDocs(collection(db, 'cars'));
+                const now = Date.now();
+                for (const d of snap.docs) {
+                    const car = d.data();
+                    if (car.status !== 'testing' || !car.createdAt || typeof car.createdAt.toMillis !== 'function') continue;
+                    if (now - car.createdAt.toMillis() >= AUTO_RELEASE_DELAY_MS) {
+                        updateDoc(doc(db, 'cars', d.id), { status: 'released' }).catch(() => {
+                            // pas grave si un autre appareil s'en charge en premier, ou si les droits manquent
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('checkAutoRelease error :', e);
+            }
+        }
+
+        setInterval(checkAutoRelease, 30 * 60 * 1000);
 
         window.deleteCar = async function(carId) {
             await deleteDoc(doc(db, 'cars', carId));
