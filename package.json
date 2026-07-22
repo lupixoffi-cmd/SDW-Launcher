@@ -1,7 +1,7 @@
 {
   "name": "sdw-launcher",
   "productName": "SDW Launcher",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Launcher Officiel SDW - Assetto Corsa",
   "main": "index.js",
   "author": "SDW Team",

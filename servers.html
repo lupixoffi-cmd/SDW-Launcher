@@ -25,24 +25,29 @@
                     <div class="item"><b>Style</b>Grip / Cut-up</div>
                     <div class="item"><b>Joueurs Max</b>24</div>
                 </div>
-                <button class="btn btn-primary" onclick="joinServer()">🏁 Rejoindre le Serveur</button>
+                <button class="btn btn-primary" onclick="joinServer1()">🏁 Rejoindre le Serveur</button>
             </div>
 
             <div class="card server-card">
-                <h2>Grip - Shutoko <span class="badge badge-online"><span class="badge-dot"></span>En ligne</span></h2>
+                <h2>Grip - Hambourg <span class="badge badge-online"><span class="badge-dot"></span>En ligne</span></h2>
                 <div class="server-info">
                     <div class="item"><b>Map</b>Shutoko Revival Project</div>
                     <div class="item"><b>Style</b>Grip / Cut-up</div>
                     <div class="item"><b>Joueurs Max</b>24</div>
                 </div>
-                <button class="btn btn-primary" onclick="joinServer()">🏁 Rejoindre le Serveur</button>
+                <button class="btn btn-primary" onclick="joinServer2()">🏁 Rejoindre le Serveur</button>
             </div>
         </div>
     </div>
 
     <script>
-        function joinServer() {
+        function joinServer1() {
             const link = "https://acstuff.club/s/q:race/online/join?ip=37.187.140.88&httpPort=28279&password=YFZCXk0FHgMBXFtIUUI%3d";
+            window.open(link, "_blank");
+        }
+
+        function joinServer2() {
+            const link = "https://acstuff.club/s/q:race/online/join?ip=37.187.140.88&httpPort=28846";
             window.open(link, "_blank");
         }
     </script>
