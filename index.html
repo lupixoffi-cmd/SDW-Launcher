@@ -405,6 +405,10 @@
             await updateDoc(doc(db, 'cars', carId), { status });
         };
 
+        window.setCarDisplayGroup = async function(carId, displayGroup) {
+            await updateDoc(doc(db, 'cars', carId), { displayGroup });
+        };
+
         const AUTO_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
 
         async function checkAutoRelease() {

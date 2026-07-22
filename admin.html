@@ -54,6 +54,9 @@
         }
         .car-row .name { font-weight: 600; }
         .car-row .feedback-count { color: var(--text-dim); font-size: 13px; margin-left: 10px; }
+        .car-row .actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .car-row .buttons-row { display: flex; }
+        .display-group-select { font-size: 12px; padding: 4px 8px; }
         .stats-row { margin-bottom: 22px; }
         .verified-yes { color: var(--success); }
         .verified-no { color: var(--text-faint); }
@@ -179,11 +182,18 @@
                             <span class="feedback-count">${approved}/${feedback.length} testeurs OK</span>
                             ${car.megaLink ? `<br><a href="#" onclick="openMega('${car.megaLink}'); return false;" style="color:var(--accent); font-size:13px;">${car.megaLink}</a>` : ''}
                         </div>
-                        <div>
-                            ${car.status === 'testing'
-                                ? `<button class="btn btn-secondary" onclick="releaseCar('${car.id}')">Sortir</button>`
-                                : `<button class="btn btn-secondary" onclick="retestCar('${car.id}')">Remettre en test</button>`}
-                            <button class="btn btn-secondary" onclick="removeCar('${car.id}')" style="margin-left:8px;">Supprimer</button>
+                        <div class="actions">
+                            <div class="buttons-row">
+                                ${car.status === 'testing'
+                                    ? `<button class="btn btn-secondary" onclick="releaseCar('${car.id}')">Sortir</button>`
+                                    : `<button class="btn btn-secondary" onclick="retestCar('${car.id}')">Remettre en test</button>`}
+                                <button class="btn btn-secondary" onclick="removeCar('${car.id}')" style="margin-left:8px;">Supprimer</button>
+                            </div>
+                            <select class="display-group-select" onchange="changeDisplayGroup('${car.id}', this.value)" title="Où afficher ce contenu une fois sorti">
+                                <option value="sorti" ${(!car.displayGroup || car.displayGroup === 'sorti') ? 'selected' : ''}>📍 Contenu Sorti</option>
+                                <option value="voitures" ${car.displayGroup === 'voitures' ? 'selected' : ''}>📍 Packs Voitures</option>
+                                <option value="maps" ${car.displayGroup === 'maps' ? 'selected' : ''}>📍 Packs Maps</option>
+                            </select>
                         </div>
                     </div>
                 `;
@@ -205,6 +215,10 @@
         async function removeCar(id) {
             if (!confirm('Supprimer définitivement cette voiture ?')) return;
             await window.parent.deleteCar(id);
+        }
+
+        async function changeDisplayGroup(id, group) {
+            await window.parent.setCarDisplayGroup(id, group);
         }
 
         let carsUnsub = null;

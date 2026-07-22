@@ -57,6 +57,7 @@
                 <h3>Grip Car Pack</h3>
                 <button class="btn btn-secondary" onclick="openLink('grip')">Installer</button>
             </div>
+            <div id="voituresExtra" style="display:contents"></div>
         </div>
 
         <div class="section-title">Packs Maps</div>
@@ -81,6 +82,7 @@
                 <h3>Transfagarasan</h3>
                 <button class="btn btn-secondary" onclick="openLink('transfagarasan')">Installer</button>
             </div>
+            <div id="mapsExtra" style="display:contents"></div>
         </div>
 
         <div id="status"></div>
@@ -111,17 +113,10 @@
             }
         }
 
-        function renderReleasedCars(cars) {
-            const released = cars.filter(c => c.status === 'released');
-            const container = document.getElementById('releasedCars');
-            if (!released.length) {
-                container.innerHTML = '<p style="color:var(--text-dim);">Aucun contenu sorti pour le moment.</p>';
-                return;
-            }
-            container.innerHTML = released.map(car => {
-                const contentType = car.category === 'track' ? 'track' : 'car';
-                const icon = contentType === 'track' ? '🗺️' : '🏁';
-                return `
+        function buildCard(car) {
+            const contentType = car.category === 'track' ? 'track' : 'car';
+            const icon = contentType === 'track' ? '🗺️' : '🏁';
+            return `
                 <div class="card pack-card">
                     <div class="pack-icon">${icon}</div>
                     <h3>${car.name}</h3>
@@ -129,7 +124,22 @@
                     ${car.megaLink ? `<button class="btn btn-secondary" onclick="installContent('${esc(car.megaLink)}', '${contentType}', '${esc(car.name)}')">Installer</button>` : ''}
                 </div>
             `;
-            }).join('');
+        }
+
+        function renderReleasedCars(cars) {
+            const released = cars.filter(c => c.status === 'released');
+
+            const sorti = released.filter(c => !c.displayGroup || c.displayGroup === 'sorti');
+            const inVoitures = released.filter(c => c.displayGroup === 'voitures');
+            const inMaps = released.filter(c => c.displayGroup === 'maps');
+
+            const container = document.getElementById('releasedCars');
+            container.innerHTML = sorti.length
+                ? sorti.map(buildCard).join('')
+                : '<p style="color:var(--text-dim);">Aucun contenu sorti pour le moment.</p>';
+
+            document.getElementById('voituresExtra').innerHTML = inVoitures.map(buildCard).join('');
+            document.getElementById('mapsExtra').innerHTML = inMaps.map(buildCard).join('');
         }
 
         let releasedCarsUnsub = window.parent.listenCars(renderReleasedCars);
