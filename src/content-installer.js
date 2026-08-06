@@ -142,14 +142,17 @@ async function downloadMegaFolderRecursive(folder, destDir, tmpDir, onProgress) 
     }
 }
 
-async function installFromMega({ url, contentType, mainWindow, onProgress }) {
-    const acPath = findAssettoCorsaPath() || await askUserForAcPath(mainWindow);
-    if (!acPath) {
-        throw new Error("Dossier Assetto Corsa introuvable, installation annulée.");
+async function installFromMega({ url, contentType, destDir, mainWindow, onProgress }) {
+    let destContentDir = destDir;
+    if (!destContentDir) {
+        // Repli si aucun dossier n'a ete choisi explicitement (ex. appel direct sans passer par le modal).
+        const acPath = findAssettoCorsaPath() || await askUserForAcPath(mainWindow);
+        if (!acPath) {
+            throw new Error("Dossier Assetto Corsa introuvable, installation annulée.");
+        }
+        const contentFolder = contentType === 'track' ? 'tracks' : 'cars';
+        destContentDir = path.join(acPath, 'content', contentFolder);
     }
-
-    const contentFolder = contentType === 'track' ? 'tracks' : 'cars';
-    const destContentDir = path.join(acPath, 'content', contentFolder);
     fs.mkdirSync(destContentDir, { recursive: true });
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sdw-install-'));

@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, dialog, autoUpdater } = require('electron');
 const path = require('path');
 const { googleSignIn, silentSignIn, signOutGoogle } = require('./src/google-auth');
-const { updateElectronApp, UpdateSourceType, makeUserNotifier } = require('update-electron-app');
+const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
 const { installFromMega } = require('./src/content-installer');
 
 if (require('electron-squirrel-startup')) {
@@ -20,12 +20,9 @@ if (app.isPackaged) {
     },
     updateInterval: '5 minutes',
     notifyUser: true,
-    onNotifyUser: makeUserNotifier({
-      title: 'Mise à jour disponible',
-      detail: 'Une nouvelle version de SDW Launcher a été téléchargée. Redémarre l\'application pour l\'appliquer.',
-      restartButtonText: 'Redémarrer',
-      laterButtonText: 'Plus tard'
-    })
+    onNotifyUser: () => {
+      if (mainWindow) mainWindow.webContents.send('show-update-modal');
+    }
   });
 }
 
@@ -50,21 +47,33 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 }
 
-ipcMain.handle('install-content', async (event, { url, contentType }) => {
+ipcMain.handle('choose-install-folder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: "Choisis le dossier d'installation (content/cars ou content/tracks)",
+    properties: ['openDirectory']
+  });
+  if (result.canceled || !result.filePaths.length) return null;
+  return result.filePaths[0];
+});
+
+ipcMain.handle('install-content', async (event, { url, contentType, destDir }) => {
   try {
-    const destDir = await installFromMega({
+    const finalDir = await installFromMega({
       url,
       contentType,
+      destDir,
       mainWindow,
       onProgress: (fraction) => {
         event.sender.send('install-progress', { fraction });
       }
     });
-    return { success: true, path: destDir };
+    return { success: true, path: finalDir };
   } catch (e) {
     return { success: false, error: e.message };
   }
 });
+
+ipcMain.on('update-restart-now', () => autoUpdater.quitAndInstall());
 
 ipcMain.handle('google-signin', () => googleSignIn());
 ipcMain.handle('google-silent-signin', () => silentSignIn());
