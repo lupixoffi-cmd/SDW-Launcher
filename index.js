@@ -44,6 +44,14 @@ function createWindow() {
     mainWindow.show();
   });
 
+  // Tout lien externe (target="_blank", window.open, y compris depuis les iframes)
+  // doit s'ouvrir avec le systeme (navigateur, Discord, Spotify...) et jamais
+  // dans une fenetre de l'appli.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   mainWindow.loadFile('index.html');
 }
 
