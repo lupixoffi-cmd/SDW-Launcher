@@ -45,6 +45,22 @@
             color: var(--text);
             font-family: 'Inter', sans-serif;
         }
+        .social-admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+        .social-admin-col { display: flex; flex-direction: column; gap: 10px; }
+        .social-admin-col input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 11px 14px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+        .social-admin-col input.name-input { font-weight: 600; }
         .car-row {
             display: flex;
             align-items: center;
@@ -83,6 +99,30 @@
 
         <div class="section-title">Contenu <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(mis à jour en temps réel)</span></div>
         <div class="panel" id="carsList">Chargement...</div>
+
+        <div class="section-title">Réseaux sociaux <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; font-size:13px;">(affichés sur la page "Nous Suivre")</span></div>
+        <div class="panel" id="socialLinksPanel">
+            <div class="social-admin-grid">
+                <div class="social-admin-col">
+                    <input type="text" class="name-input" id="sl-p1-name" placeholder="Nom (ex: Toi)">
+                    <input type="text" id="sl-p1-tiktok" placeholder="Lien TikTok">
+                    <input type="text" id="sl-p1-youtube" placeholder="Lien YouTube">
+                    <input type="text" id="sl-p1-discord" placeholder="Lien Discord">
+                    <input type="text" id="sl-p1-spotify" placeholder="Lien Spotify (playlist)">
+                    <input type="text" id="sl-p1-gunslol" placeholder="Lien guns.lol">
+                </div>
+                <div class="social-admin-col">
+                    <input type="text" class="name-input" id="sl-p2-name" placeholder="Nom (ex: Ton ami)">
+                    <input type="text" id="sl-p2-tiktok" placeholder="Lien TikTok">
+                    <input type="text" id="sl-p2-youtube" placeholder="Lien YouTube">
+                    <input type="text" id="sl-p2-discord" placeholder="Lien Discord">
+                    <input type="text" id="sl-p2-spotify" placeholder="Lien Spotify (playlist)">
+                    <input type="text" id="sl-p2-gunslol" placeholder="Lien guns.lol">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSocial()" style="margin-top:18px;">Enregistrer les liens</button>
+            <span id="socialSaveStatus" style="margin-left:12px; color:var(--success); font-size:13px;"></span>
+        </div>
 
         <div class="section-title">Membres</div>
         <div class="grid grid-3 stats-row">
@@ -221,10 +261,65 @@
             await window.parent.setCarDisplayGroup(id, group);
         }
 
+        async function loadSocialLinks() {
+            let links;
+            try {
+                links = await window.parent.getSocialLinks();
+            } catch (e) {
+                console.error('getSocialLinks error :', e);
+                return;
+            }
+            document.getElementById('sl-p1-name').value = links.person1.name || '';
+            document.getElementById('sl-p1-tiktok').value = links.person1.tiktok || '';
+            document.getElementById('sl-p1-youtube').value = links.person1.youtube || '';
+            document.getElementById('sl-p1-discord').value = links.person1.discord || '';
+            document.getElementById('sl-p1-spotify').value = links.person1.spotify || '';
+            document.getElementById('sl-p1-gunslol').value = links.person1.gunslol || '';
+            document.getElementById('sl-p2-name').value = links.person2.name || '';
+            document.getElementById('sl-p2-tiktok').value = links.person2.tiktok || '';
+            document.getElementById('sl-p2-youtube').value = links.person2.youtube || '';
+            document.getElementById('sl-p2-discord').value = links.person2.discord || '';
+            document.getElementById('sl-p2-spotify').value = links.person2.spotify || '';
+            document.getElementById('sl-p2-gunslol').value = links.person2.gunslol || '';
+        }
+
+        async function saveSocial() {
+            const links = {
+                person1: {
+                    name: document.getElementById('sl-p1-name').value.trim(),
+                    tiktok: document.getElementById('sl-p1-tiktok').value.trim(),
+                    youtube: document.getElementById('sl-p1-youtube').value.trim(),
+                    discord: document.getElementById('sl-p1-discord').value.trim(),
+                    spotify: document.getElementById('sl-p1-spotify').value.trim(),
+                    gunslol: document.getElementById('sl-p1-gunslol').value.trim()
+                },
+                person2: {
+                    name: document.getElementById('sl-p2-name').value.trim(),
+                    tiktok: document.getElementById('sl-p2-tiktok').value.trim(),
+                    youtube: document.getElementById('sl-p2-youtube').value.trim(),
+                    discord: document.getElementById('sl-p2-discord').value.trim(),
+                    spotify: document.getElementById('sl-p2-spotify').value.trim(),
+                    gunslol: document.getElementById('sl-p2-gunslol').value.trim()
+                }
+            };
+            const status = document.getElementById('socialSaveStatus');
+            try {
+                await window.parent.saveSocialLinks(links);
+                status.style.color = 'var(--success)';
+                status.textContent = '✅ Enregistré';
+            } catch (e) {
+                console.error('saveSocialLinks error :', e);
+                status.style.color = '#ff6b6b';
+                status.textContent = '❌ Échec de l\'enregistrement';
+            }
+            setTimeout(() => { status.textContent = ''; }, 3000);
+        }
+
         let carsUnsub = null;
 
         window.onload = function() {
             loadUsers();
+            loadSocialLinks();
             carsUnsub = window.parent.listenCars(renderCars);
         };
 

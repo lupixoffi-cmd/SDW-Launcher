@@ -1,13 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --bg: #0b0b10;
-    --bg-elevated: #14141b;
+    --bg: #0a0c10;
+    --bg-elevated: #12161c;
     --panel: rgba(255,255,255,0.04);
-    --panel-border: rgba(255,255,255,0.08);
-    --accent: #ff2d3a;
-    --accent-hover: #ff4d55;
-    --accent-dim: rgba(255,45,58,0.15);
+    --panel-border: rgba(140,220,255,0.10);
+    --accent: #22d3ee;
+    --accent-hover: #5ee6f7;
+    --accent-dim: rgba(34,211,238,0.15);
+    --accent-glow: rgba(34,211,238,0.45);
     --text: #f2f2f5;
     --text-dim: #9a9aa8;
     --text-faint: #63636e;
@@ -75,7 +76,7 @@ a { color: inherit; }
 }
 
 .card:hover {
-    border-color: rgba(255,45,58,0.35);
+    border-color: rgba(34,211,238,0.35);
     transform: translateY(-2px);
     background: rgba(255,255,255,0.055);
 }
@@ -100,32 +101,40 @@ a { color: inherit; }
     border: none;
     border-radius: 9px;
     cursor: pointer;
-    transition: background .18s ease, transform .12s ease, box-shadow .18s ease;
+    transition: background .2s ease, transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
     color: var(--text);
 }
 
-.btn:active { transform: scale(0.97); }
+.btn:hover { transform: scale(1.055); }
+.btn:active { transform: scale(0.96); }
 
 .btn-primary {
     background: var(--accent);
-    box-shadow: 0 4px 18px rgba(255,45,58,0.25);
+    box-shadow: 0 4px 18px rgba(34,211,238,0.25);
 }
-.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 6px 28px var(--accent-glow);
+}
 
 .btn-secondary {
     background: rgba(255,255,255,0.06);
     border: 1px solid var(--panel-border);
 }
-.btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 6px 20px rgba(34,211,238,0.12);
+}
 
 .btn-discord { background: var(--discord); }
-.btn-discord:hover { background: #6b76f5; }
+.btn-discord:hover { background: #6b76f5; box-shadow: 0 6px 24px rgba(88,101,242,0.4); }
 
 .btn:disabled {
     background: #2a2a33 !important;
     color: var(--text-faint);
     cursor: not-allowed;
     box-shadow: none;
+    transform: none !important;
 }
 
 .badge {

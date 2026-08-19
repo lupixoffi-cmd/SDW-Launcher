@@ -9,7 +9,7 @@
         body {
             display: flex;
             background:
-                radial-gradient(circle at 15% 0%, rgba(255,45,58,0.10), transparent 45%),
+                radial-gradient(circle at 15% 0%, rgba(34,211,238,0.09), transparent 45%),
                 linear-gradient(180deg, rgba(6,6,9,0.92), rgba(6,6,9,0.96)),
                 url('logo.png') center/cover no-repeat fixed;
         }
@@ -116,8 +116,22 @@
             padding: 10px 8px 0;
         }
 
-        .content { flex: 1; height: 100vh; }
-        iframe { border: none; width: 100%; height: 100%; background: transparent; }
+        .content { flex: 1; height: 100vh; position: relative; overflow: hidden; }
+        .page-frame {
+            position: absolute;
+            inset: 0;
+            border: none;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            transform: translateX(50px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform .42s cubic-bezier(.22,1,.36,1), opacity .42s cubic-bezier(.22,1,.36,1);
+        }
+        .page-frame.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .page-frame.leave { transform: translateX(-50px); opacity: 0; }
+        .page-frame.no-anim { transition: none !important; }
 
         .app-modal-overlay {
             position: fixed;
@@ -177,6 +191,7 @@
             <a href="#" data-page="download" onclick="loadPage('download')"><span class="ico">⬇️</span>Téléchargements</a>
             <a href="#" data-page="rules" onclick="loadPage('rules')"><span class="ico">📋</span>Règles</a>
             <a href="#" data-page="about" onclick="loadPage('about')"><span class="ico">ℹ️</span>À Propos</a>
+            <a href="#" data-page="follow" onclick="loadPage('follow')"><span class="ico">🔗</span>Nous Suivre</a>
             <div class="nav-sep"></div>
             <a href="#" data-page="profile" onclick="loadPage('profile')"><span class="ico">👤</span>Mon Profil</a>
             <a href="#" data-page="tests" class="role-gated" data-role="tester" onclick="loadPage('tests')"><span class="ico">🧪</span>Tests Voitures</a>
@@ -187,7 +202,8 @@
         </div>
     </div>
     <div class="content">
-        <iframe id="pageFrame"></iframe>
+        <iframe id="pageFrameA" class="page-frame active"></iframe>
+        <iframe id="pageFrameB" class="page-frame"></iframe>
     </div>
     <script>
         const { initializeApp } = require('firebase/app');
@@ -237,6 +253,37 @@
         let currentUser = null;
         let currentProfile = null;
 
+        const frames = [document.getElementById('pageFrameA'), document.getElementById('pageFrameB')];
+        let activeFrameIndex = 0;
+
+        function navigateFrame(src) {
+            const activeEl = frames[activeFrameIndex];
+            const nextIndex = 1 - activeFrameIndex;
+            const nextEl = frames[nextIndex];
+
+            // Repositionne l'iframe suivante hors-champ sans animation avant d'y charger la page,
+            // sinon elle se voit glisser depuis sa derniere position (celle de la sortie precedente).
+            nextEl.classList.add('no-anim');
+            nextEl.classList.remove('active', 'leave');
+            void nextEl.offsetWidth;
+            nextEl.classList.remove('no-anim');
+
+            let done = false;
+            const finish = () => {
+                if (done) return;
+                done = true;
+                requestAnimationFrame(() => {
+                    activeEl.classList.remove('active');
+                    activeEl.classList.add('leave');
+                    nextEl.classList.add('active');
+                });
+                activeFrameIndex = nextIndex;
+            };
+            nextEl.addEventListener('load', finish, { once: true });
+            nextEl.src = src;
+            setTimeout(finish, 2000); // repli si l'evenement 'load' ne se declenche jamais
+        }
+
         function setCurrent(page) {
             document.querySelectorAll('.nav-links a').forEach(link => {
                 link.classList.toggle('current', link.dataset.page === page);
@@ -245,14 +292,14 @@
 
         function loadPage(page) {
             if (!currentUser) {
-                document.getElementById('pageFrame').src = 'login.html';
+                navigateFrame('login.html');
                 return;
             }
             if (!rulesAccepted) {
-                document.getElementById('pageFrame').src = 'rules.html';
+                navigateFrame('rules.html');
                 return;
             }
-            document.getElementById('pageFrame').src = page + '.html';
+            navigateFrame(page + '.html');
             setCurrent(page);
         }
 
@@ -299,7 +346,7 @@
             if (!currentUser) {
                 disableMenu();
                 renderUserCard();
-                document.getElementById('pageFrame').src = 'login.html';
+                navigateFrame('login.html');
             } else if (!rulesAccepted) {
                 renderUserCard();
                 loadPage('rules');
@@ -481,6 +528,29 @@
 
         window.setCarDisplayGroup = async function(carId, displayGroup) {
             await updateDoc(doc(db, 'cars', carId), { displayGroup });
+        };
+
+        const DEFAULT_SOCIAL_LINKS = {
+            person1: { name: 'Toi', tiktok: '', youtube: '', discord: '', gunslol: '', spotify: '' },
+            person2: { name: 'Ton ami', tiktok: '', youtube: '', discord: '', gunslol: '', spotify: '' }
+        };
+
+        window.getSocialLinks = async function() {
+            const snap = await getDoc(doc(db, 'settings', 'socialLinks'));
+            if (!snap.exists()) return DEFAULT_SOCIAL_LINKS;
+            const data = snap.data();
+            return {
+                person1: { ...DEFAULT_SOCIAL_LINKS.person1, ...(data.person1 || {}) },
+                person2: { ...DEFAULT_SOCIAL_LINKS.person2, ...(data.person2 || {}) }
+            };
+        };
+
+        window.saveSocialLinks = async function(links) {
+            // Reconstruit l'objet dans le "realm" JS de cette fenêtre : un objet
+            // venant d'une iframe (admin.html) a un prototype different, ce que
+            // Firestore refuse ("must be an object, but it was a custom Object").
+            const plain = JSON.parse(JSON.stringify(links));
+            await setDoc(doc(db, 'settings', 'socialLinks'), plain);
         };
 
         const AUTO_RELEASE_DELAY_MS = 24 * 60 * 60 * 1000;
